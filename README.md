@@ -116,6 +116,7 @@ Leveraged Amazon Lightsail to create an Ubuntu 16.04 LTS server. Configure serve
   * Input name for keypair
   * Download the keypair
 8. Obtain public key string for keypair on local machine
+  * Open new terminal
   * Execute ```mv <keypair path>/<keypair>.pem ~/<local path>/.ssh/<keypair>.pem```
   * Execute ```chmod 400 <keypair>.pem```
   * Execute ```ssh-keygen -y```
@@ -148,8 +149,32 @@ Installed packages needed for the Catalog application.
   * Execute ```sudo pip3 install --upgrade pip```
 6. Install Flask
   * Execute ```sudo pip3 install Flask```
-7. Install Python3 virtual environment
+7. Install flask_httpauth
+  * Execute ```sudo pip3 install flask_httpauth```
+8. Install SQLAlchemy
+  * Execute ```sudo pip3 install sqlalchemy```
+9. Install passlib
+  * Execute ```sudo pip3 install passlib```
+10. Install OAuth2client
+  * Execute ```sudo pip3 intall oauth2client```
+11. Install psycopg2
+  * Execute ```sudo pip3 install psycopg2-binary```
+12. Install Python3 virtual environment
   * Execute ```sudo apt-get install -y python3-venv```
+
+### Postgresql Setup
+1. Verify no remote connections allowed
+  * Execute ```sudo cat /etc/postgresql/9.5/main/pg_hba.conf```
+2. Execute ```sudo su - postgres```
+3. Start Postgresql cli
+  * Execute ```psql```
+4. Create new database catalog
+  * Execute ```CREATE DATABASE catalog;```
+5. Create new user catalog
+  * Execute ```CREATE USER catalog;```
+  * Execute ```ALTER ROLE catalog WITH PASSWORD '<password>';```
+  * Execute ```GRANT ALL PRIVILEGES ON DATABASE catalog TO catalog;```
+6. Database table creation is handled by database_setup.py file
 
 ### Application Deployment:
 #### Configure Apache to run Flask Python3
@@ -218,19 +243,89 @@ if __name__ == "__main__":
   from FlaskApp import app as application
   application.secret_key = 'Add your secret key'
   ```
-11. Execute ```sudo service apache2 restart```
+11. Execute ```sudo apache2ctl restart```
 
+#### Deploy Catalog Application
+1. Execute ```cd /var/www```
+2. Clone Catalog application from GitHub
+  * Execute ```git clone https://github.com/mknowlin2/catalog_app.git CatalogApp```
+3. Execute ```sudo touch Catalog/catalogApp.wsgi```
+4. Update "catalogApp.wsgi" file with the following:
+```
+#!/usr/bin/env python3     
+import sys
+import logging
+logging.basicConfig(stream=sys.stderr)
+sys.path.insert(0,"/var/www/CatalogApp/")
+sys.path.append("/var/www/CatalogApp/src/")
+from src  import catalog_app
+application = catalog_app.app
+application.secret_key = 'yekTerces'
+```
+5. Execute ```sudo touch src/__init__.py```
+6. Execute ```sudo touch src/database/__init__.py```
+7. Create the client_secret.json file
+  * Execute ```sudo touch src/client_secret.json```
+8. Setup Google OAuth2 Client ID
+  * Go to Google APIs Console — https://console.developers.google.com/apis
+  * Choose Credentials from the menu on the left.
+  * Create an OAuth Client ID and configure consent screen.
+    * Authorized JavaScript origins:  http://ec2-18-217-251-253.us-east-2.compute.amazonaws.com
+    * Authorized redirect URIs:
+ http://ec2-18-217-251-253.us-east-2.compute.amazonaws.com/catalog
+  * Download client_secret json file to local machine
+    * Open new terminal
+    * Execute ```cat /<path>/client_secret_*.json```
+    * Copy output to clipboard
+  * Rename file to "client_secret.json"
+9. Paste OAuth2 client secret to /var/www/CatalogApp/src/client_secret.json
+  * Execute ```sudo vi src/client_secret.json```
+  * Insert OAuth2 client secret string
+  * Save and close
+10. Replace "client_secret.json" with "/var/www/CatalogApp/CatalogApp/client_secret.json" in catalog_app.py
+  * Execute ```sudo vi src/catalog_app.py``` edit and save
+11. Replace "http://localhost:5000" in  "/var/www/CatalogApp/src/templates/login.html" with hostname.
+  * Execute ```sudo vi src/templates/login.html``` edit and save.
+12. Update "data-clientid" in "/var/www/CatalogApp/src/templates/login.html" with OAuth2 client id.
+  * Execute ```sudo vi src/templates/login.html``` edit and save.
+13. Replace "sqlite:///catalog.db" with replace 'sqlite:///catalog.db' with 'postgresql://catalog:<password>@localhost/catalog' in the "src/database" files:
+  * Execute ```sudo vi src/database/data_access.py``` edit and save.
+  * Execute ```sudo vi src/database/database_setup.py``` edit and save.
+14. Configure and Enable site
+  * Execute ```sudo touch /etc/apache2/sites-available/CatalogApp.conf```
+  * Update "CatalogApp.conf" file with the following:
+  ```
+  <VirtualHost *:80>
+        ServerName http://ec2-18-217-251-253.us-east-2.compute.amazonaws.com/
+        ServerAdmin webmaster@localhost
+        #DocumentRoot /var/www/html
 
+        WSGIScriptAlias / /var/www/CatalogApp/catalogApp.wsgi
+        <Directory /var/www/CatalogApp/src/>
+                Order allow,deny
+                Allow from all
+        </Directory>
 
+        Alias /static /var/www/CatalogApp/src/static
+        <Directory /var/www/CatalogApp/src/static/>
+                Order allow,deny
+                Allow from all
+        </Directory>
 
-1. Go to Google APIs Console — https://console.developers.google.com/apis
-2. Create a project
-3. Choose Credentials from the menu on the left.
-4. Create an OAuth Client ID and configure consent screen.
-5. Download OAuth Client Id json file to (cloned repository)/src directory
-4. Rename file to "client_secret.json"  
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        Loglevel warn
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+        WSGIDaemonProcess pylons python-home=/var/www/CatalogApp/venv
+</VirtualHost>
+  ```
+  * Execute ```a2ensite CatalogApp```
+  * Execute ```sudo apache2ctl restart```
+15. Test the application
+  * Goto URL: http://ec2-18-217-251-253.us-east-2.compute.amazonaws.com/catalog
 
 ## Resources Referenced
 * https://lightsail.aws.amazon.com/ls/docs/all
 * https://aws.amazon.com/premiumsupport/knowledge-center/new-user-accounts-linux-instance/
+* https://support.google.com/googleapi/answer/6158849
 * http://www.islandtechph.com/2017/10/23/how-to-deploy-a-flask-python-3-5-application-on-a-live-ubuntu-16-04-linux-server-running-apache2/

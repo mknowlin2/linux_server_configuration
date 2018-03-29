@@ -7,6 +7,9 @@ Take a baseline installation of a Linux distribution on a virtual machine and pr
 ## Project Details:
 Leveraged Amazon Lightsail to create an Ubuntu 16.04 LTS server. Configure server to only support ssh(2200), http(80), and ntp(123). Deploy the Flask [Catalog](https://github.com/mknowlin2/catalog_app) application to the server. Create a Grader user account with sudo access.
 
+* IP address: 18.217.251.253
+* URL: http://ec2-18-217-251-253.us-east-2.compute.amazonaws.com
+
 ### Server Information:
 #### Lightsail Ubuntu Server Setup:
 1. Go to Amazon [Lightsail](https://lightsail.aws.amazon.com)
@@ -266,7 +269,9 @@ application.secret_key = 'yekTerces'
 6. Execute ```sudo touch src/database/__init__.py```
 7. Create the client_secret.json file
   * Execute ```sudo touch src/client_secret.json```
-8. Setup Google OAuth2 Client ID
+8. Obtain server hostname
+  * Execute ```nslookup 18.217.251.253 ```
+9. Setup Google OAuth2 Client ID
   * Go to Google APIs Console — https://console.developers.google.com/apis
   * Choose Credentials from the menu on the left.
   * Create an OAuth Client ID and configure consent screen.
@@ -278,20 +283,20 @@ application.secret_key = 'yekTerces'
     * Execute ```cat /<path>/client_secret_*.json```
     * Copy output to clipboard
   * Rename file to "client_secret.json"
-9. Paste OAuth2 client secret to /var/www/CatalogApp/src/client_secret.json
+10. Paste OAuth2 client secret to /var/www/CatalogApp/src/client_secret.json
   * Execute ```sudo vi src/client_secret.json```
   * Insert OAuth2 client secret string
   * Save and close
-10. Replace "client_secret.json" with "/var/www/CatalogApp/CatalogApp/client_secret.json" in catalog_app.py
+11. Replace "client_secret.json" with "/var/www/CatalogApp/CatalogApp/client_secret.json" in catalog_app.py
   * Execute ```sudo vi src/catalog_app.py``` edit and save
-11. Replace "http://localhost:5000" in  "/var/www/CatalogApp/src/templates/login.html" with hostname.
+12. Replace "http://localhost:5000" in  "/var/www/CatalogApp/src/templates/login.html" with hostname.
   * Execute ```sudo vi src/templates/login.html``` edit and save.
-12. Update "data-clientid" in "/var/www/CatalogApp/src/templates/login.html" with OAuth2 client id.
+13. Update "data-clientid" in "/var/www/CatalogApp/src/templates/login.html" with OAuth2 client id.
   * Execute ```sudo vi src/templates/login.html``` edit and save.
-13. Replace "sqlite:///catalog.db" with replace 'sqlite:///catalog.db' with 'postgresql://catalog:<password>@localhost/catalog' in the "src/database" files:
+14. Replace "sqlite:///catalog.db" with replace 'sqlite:///catalog.db' with 'postgresql://catalog:<password>@localhost/catalog' in the "src/database" files:
   * Execute ```sudo vi src/database/data_access.py``` edit and save.
   * Execute ```sudo vi src/database/database_setup.py``` edit and save.
-14. Configure and Enable site
+15. Configure and Enable site
   * Execute ```sudo touch /etc/apache2/sites-available/CatalogApp.conf```
   * Update "CatalogApp.conf" file with the following:
   ```
@@ -321,7 +326,7 @@ application.secret_key = 'yekTerces'
   ```
   * Execute ```a2ensite CatalogApp```
   * Execute ```sudo apache2ctl restart```
-15. Test the application
+16. Test the application
   * Goto URL: http://ec2-18-217-251-253.us-east-2.compute.amazonaws.com/catalog
 
 ## Resources Referenced

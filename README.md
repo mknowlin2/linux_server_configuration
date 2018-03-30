@@ -62,6 +62,7 @@ Leveraged Amazon Lightsail to create an Ubuntu 16.04 LTS server. Configure serve
     * ```sudo ufw default allow outgoing```
   * Setup ssh firewall rules
     * ```sudo ufw allow ssh```
+    * ```sudo ufw deny 22```
     * ```sudo ufw allow 2200/tcp```
   * Setup http firewall rules
     * ```sudo ufw allow http```

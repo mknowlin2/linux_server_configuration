@@ -31,6 +31,11 @@ Leveraged Amazon Lightsail to create an Ubuntu 16.04 LTS server. Configure serve
   * Execute ```sudo apt-get update```
   * Execute ```sudo apt-get upgrade```
   * Execute ```sudo apt-get autoremove```
+2. Install and enable unattended-upgrades
+  * Execute ```sudo apt-get install unattended-upgrades```
+  * Execute ```sudo dpkg-reconfigure --priority=low unattended-upgrades```
+  * Select "Yes"
+  * Confirm origin is ```"origin=Debian,codename=${distro_codename},label=Debian-Security";```
 2. Change local time to UTC
   * Execute ```sudo dpkg-reconfigure tzdata```
   * Select "None of the above"
